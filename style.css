@@ -1,0 +1,9 @@
+.dial {
+	fill: none;
+	stroke: black;
+	stroke-width: 1pt;
+}
+
+.hand {
+	stroke: red;
+}
