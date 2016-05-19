@@ -1,9 +1,16 @@
 .dial {
 	fill: none;
-	stroke: black;
-	stroke-width: 1pt;
+	stroke: grey;
+	stroke-width: 3pt;
 }
 
 .hand {
 	stroke: red;
+	stroke-width: 3pt;
+}
+
+text {
+	font-family: sans-serif;
+	font-size: 30pt;
+	font-weight: bolder;
 }
