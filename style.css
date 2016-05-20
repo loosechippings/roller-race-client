@@ -9,8 +9,23 @@
 	stroke-width: 3pt;
 }
 
-text {
+.chasehand {
+	stroke: green;
+	stroke-width: 3pt;
+}
+
+.timer {
 	font-family: sans-serif;
 	font-size: 30pt;
 	font-weight: bolder;
+}
+
+.lap {
+	font-family: sans-serif;
+	font-size: 16;
+	color: grey;
+}
+
+body {
+	background: aliceblue;
 }

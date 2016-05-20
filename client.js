@@ -2,25 +2,38 @@ var socket;
 var val=0;
 var onelap=500.0;
 var div=360/onelap;
-var width=800, height=500;
+var width=window.innerWidth, height=window.innerHeight;
+var lapList=new Array();
+var lapSpeed=0,chaseHandDist=0,lapStartTime=0;
+var dialCenterX=width/2, dialCenterY=height/2;
 
 connect();
 
 dial=d3.select("body").append("svg").attr("width",width).attr("height",height).
 	append("circle").
 	attr("r",190).
-	attr("cx",400).
-	attr("cy",200).
+	attr("cx",dialCenterX).
+	attr("cy",dialCenterY).
 	classed('dial',true);
+chaseHand=d3.select("svg").append("line").
+	attr("x1",dialCenterX).attr("y1",dialCenterY-140).
+	attr("x2",dialCenterX).attr("y2",dialCenterY-190).
+	classed("chasehand",true);
 hand=d3.select("svg").append("line").
-	attr("x1",400).attr("y1",60).
-	attr("x2",400).attr("y2",10).
+	attr("x1",dialCenterX).attr("y1",dialCenterY-140).
+	attr("x2",dialCenterX).attr("y2",dialCenterY-190).
 	classed("hand",true);
-d3.select("svg").append("text").attr("x",310).attr("y",200).classed("timer","true");
+d3.select("svg").append("text").attr("x",dialCenterX-90).attr("y",dialCenterY).classed("timer","true");
 
 function updateHand(data) {
 	d3.select(".hand").data([data]).attr("transform",function(d) {
-		return "rotate("+div*(d%onelap)+",400,200)";
+		return "rotate("+div*(d%onelap)+","+dialCenterX+","+dialCenterY+")";
+	});
+}
+
+function updateChaseHand(data) {
+	d3.select(".chasehand").data([data]).attr("transform",function(d) {
+		return "rotate("+div*(d%onelap)+","+dialCenterX+","+dialCenterY+")";
 	});
 }
 
@@ -30,12 +43,7 @@ function connect() {
 	socket.onclose=function(m) {
 		setTimeout(connect,500)
 	};
-	socket.onopen=openSocket;
 	socket.onmessage=showMessage;
-}
-
-function openSocket() {
-	text.text("0");
 }
 
 function formatTwoDigits(num) {
@@ -52,10 +60,66 @@ function formatTime(millis) {
 	return formatTwoDigits(mins)+":"+formatTwoDigits((secs%60))+":"+(millis%1000);
 }
 
-function showMessage(message) {
-	data=message.data.split(',');
+function updateTick(data) {
 	dist=parseInt(data[0]);
 	millis=formatTime(data[1]);
 	d3.select(".timer").text(millis);
 	updateHand([dist]);
+	chaseHandDist=lapSpeed*(Date.now()-lapStartTime);
+	updateChaseHand(chaseHandDist);
+}
+
+function updateLaps(data) {
+	var lapData=d3.select("svg").
+						selectAll(".lap").
+						data(data,function(d) {return d[1]});
+
+	var lapUpdate=d3.transition(lapData).
+							attr("transform",function(d,i) {
+								var s="translate (0,"+(i*20)+")";
+								return s;
+							});
+
+	var newEnter=d3.select("svg").selectAll(".lap").
+		data(data,function(d) {return d[1]}).
+		enter();
+	
+	var newText=newEnter.
+		append("text").
+		attr("x",dialCenterX-300).
+		attr("y",dialCenterY-200).
+		attr("transform",function(d,i) {
+			return "translate (0,"+(i*20)+")";
+		}).
+		classed("lap","true").
+		text(function(d) {
+			return formatTime(d[0]);
+		});
+
+	newText.style("font-size","30pt").transition().ease("circle").duration(1000).style("font-size","12pt");
+
+	lapData.exit().remove();
+}
+
+function pairUp(data) {
+	var n=new Array();
+	for (i=0;i<data.length;i+=2) {
+		n.push([data[i],data[i+1]]);
+	}
+}
+
+function showMessage(message) {
+	var data=message.data.split(',');
+	var recordType=data.shift();
+	if (recordType=="t") {
+		updateTick(data);
+	} else if (recordType=="l") {
+		lapList.push([data[0],data[1]]);
+		lapSpeed=onelap/data[0];
+		lapStartTime=Date.now() //use local clock for this
+		chaseHandDist=0;
+		lapList.sort(function(a,b) {return a[0]-b[0]});
+		if (lapList.length>10) {lapList.pop()}
+		updateLaps(lapList);
+	}
 }
