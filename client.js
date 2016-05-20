@@ -4,24 +4,47 @@ var onelap=500.0;
 var div=360/onelap;
 var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
-var lapSpeed=0,chaseHandDist=0,lapStartTime=0;
-var dialCenterX=width/2, dialCenterY=height/2;
+var lastLapSpeed=0,chaseHandDist=0,lapStartTime=0;
+var dialCenterX=width/2, dialCenterY=height/2, dialRadius=190, tickLength=10;
 
 connect();
 
+function tickX(angle, radius) {
+	return Math.sin(angle)*radius+dialCenterX;
+}
+
+function tickY(angle, radius) {
+	return Math.cos(angle)*radius+dialCenterY;
+}
+
 dial=d3.select("body").append("svg").attr("width",width).attr("height",height).
 	append("circle").
-	attr("r",190).
+	attr("r",dialRadius).
 	attr("cx",dialCenterX).
 	attr("cy",dialCenterY).
 	classed('dial',true);
+
+d3.select("svg").selectAll(".ticks").data([0,Math.PI/2,Math.PI,Math.PI+Math.PI/2]).
+	enter().
+	append("line").attr("x1",function(d) {
+		return tickX(d,dialRadius)
+	}).
+	attr("x2",function(d) {
+		return tickX(d,dialRadius+tickLength);
+	}).
+	attr("y1",function(d) {
+		return tickY(d,dialRadius);
+	}).attr("y2",function(d) {
+		return tickY(d,dialRadius+10);
+	}).classed("dial","true");
+
 chaseHand=d3.select("svg").append("line").
-	attr("x1",dialCenterX).attr("y1",dialCenterY-140).
-	attr("x2",dialCenterX).attr("y2",dialCenterY-190).
+	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+50).
+	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("chasehand",true);
 hand=d3.select("svg").append("line").
-	attr("x1",dialCenterX).attr("y1",dialCenterY-140).
-	attr("x2",dialCenterX).attr("y2",dialCenterY-190).
+	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+50).
+	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
 d3.select("svg").append("text").attr("x",dialCenterX-90).attr("y",dialCenterY).classed("timer","true");
 
@@ -65,7 +88,7 @@ function updateTick(data) {
 	millis=formatTime(data[1]);
 	d3.select(".timer").text(millis);
 	updateHand([dist]);
-	chaseHandDist=lapSpeed*(Date.now()-lapStartTime);
+	chaseHandDist=lastLapSpeed*(Date.now()-lapStartTime);
 	updateChaseHand(chaseHandDist);
 }
 
@@ -115,7 +138,7 @@ function showMessage(message) {
 		updateTick(data);
 	} else if (recordType=="l") {
 		lapList.push([data[0],data[1]]);
-		lapSpeed=onelap/data[0];
+		lastLapSpeed=onelap/data[0];
 		lapStartTime=Date.now() //use local clock for this
 		chaseHandDist=0;
 		lapList.sort(function(a,b) {return a[0]-b[0]});
