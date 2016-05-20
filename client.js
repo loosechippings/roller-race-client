@@ -4,7 +4,7 @@ var onelap=500.0;
 var div=360/onelap;
 var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
-var lastLapSpeed=0,chaseHandDist=0,lapStartTime=0;
+var topLapSpeed=0,chaseHandDist=0,lapStartTime=0;
 var dialCenterX=width/2, dialCenterY=height/2, dialRadius=190, tickLength=10;
 
 connect();
@@ -69,6 +69,16 @@ function connect() {
 	socket.onmessage=showMessage;
 }
 
+function formatThreeDigits(num) {
+	if (num<10) {
+		return "00"+num;
+	} else if (num<100) {
+		return "0"+num;
+	} else {
+		return ""+num;
+	}
+}
+
 function formatTwoDigits(num) {
 	if (num<10) {
 		return "0"+num;
@@ -80,7 +90,7 @@ function formatTwoDigits(num) {
 function formatTime(millis) {
 	secs=parseInt(millis/1000);
 	mins=parseInt(secs/60);
-	return formatTwoDigits(mins)+":"+formatTwoDigits((secs%60))+":"+(millis%1000);
+	return formatTwoDigits(mins)+":"+formatTwoDigits((secs%60))+":"+formatThreeDigits(millis%1000);
 }
 
 function updateTick(data) {
@@ -88,7 +98,7 @@ function updateTick(data) {
 	millis=formatTime(data[1]);
 	d3.select(".timer").text(millis);
 	updateHand([dist]);
-	chaseHandDist=lastLapSpeed*(Date.now()-lapStartTime);
+	chaseHandDist=topLapSpeed*(Date.now()-lapStartTime);
 	updateChaseHand(chaseHandDist);
 }
 
@@ -138,11 +148,11 @@ function showMessage(message) {
 		updateTick(data);
 	} else if (recordType=="l") {
 		lapList.push([data[0],data[1]]);
-		lastLapSpeed=onelap/data[0];
 		lapStartTime=Date.now() //use local clock for this
 		chaseHandDist=0;
 		lapList.sort(function(a,b) {return a[0]-b[0]});
 		if (lapList.length>10) {lapList.pop()}
+		topLapSpeed=onelap/lapList[0][0];
 		updateLaps(lapList);
 	}
 }
