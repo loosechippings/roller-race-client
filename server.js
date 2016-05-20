@@ -29,7 +29,6 @@ function updateLaps() {
 	lapList.push(lap);
 	lapList.sort(function(a,b) {return a[0]-b[0]})
 	if (lapList.length>10) {lapList.pop()}
-	console.log(lapCounter);
 	broadcastLaps(lap);
 }
 
