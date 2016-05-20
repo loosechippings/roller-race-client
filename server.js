@@ -15,8 +15,6 @@ function handleConnection(client) {
 	connections.push(client);
 }
 
-setTimeout(tick,500);
-
 function completedALap() {
 	return (parseInt(t/lapLength)!=lapCounter);
 }
@@ -40,13 +38,15 @@ function broadcastTick(msg) {
 	broadcast("t,"+msg);
 }
 
-function tick() {
-	msg=(t+=5)+","+(Date.now()-starttime);
+function handleData(message) {
+	console.log(message);
+	data=message.split(',');
+	t=data[0];
+	var msg=t+","+data[1]
 	broadcastTick(msg);
 	if (completedALap()) {
 		updateLaps();
 	}
-	setTimeout(tick,50);
 }
 
 function broadcast(data) {
@@ -68,12 +68,6 @@ var arduino=new SerialPort(portName, {
 	parser: serialport.parsers.readline("\n")
 });
 
-arduino.on("open", function() {console.log("port open"));
+arduino.on("open", function() {console.log("port open")});
+arduino.on("data", handleData);
 
-serialport.list(
-	function(err,ports) {
-		ports.forEach(function(port) {
-			console.log(port.comName);
-		})
-	}
-);
