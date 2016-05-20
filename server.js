@@ -60,6 +60,16 @@ function broadcast(data) {
 	}
 }
 
+var SerialPort=serialport.SerialPort;
+var portName="/dev/ttyUSB0"
+
+var arduino=new SerialPort(portName, {
+	baudRate: 9600,
+	parser: serialport.parsers.readline("\n")
+});
+
+arduino.on("open", function() {console.log("port open"));
+
 serialport.list(
 	function(err,ports) {
 		ports.forEach(function(port) {
