@@ -4,7 +4,7 @@ var onelap=500.0;
 var div=360/onelap;
 var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
-var topLapSpeed=0,chaseHandDist=0,lapStartTime=0;
+var topLapSpeed=0,chaseHandDist=0,lapStartTime=Date.now();
 var dialCenterX=width/2, dialCenterY=height/2, dialRadius=190, tickLength=10;
 
 connect();
