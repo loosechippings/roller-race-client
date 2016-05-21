@@ -148,7 +148,7 @@ function showMessage(message) {
 		updateTick(data);
 	} else if (recordType=="l") {
 		lapList.push([data[0],data[1]]);
-		lapStartTime=Date.now() //use local clock for this
+		lapStartTime=Date.now(); // use local time for this because its for the chase hand
 		chaseHandDist=0;
 		lapList.sort(function(a,b) {return a[0]-b[0]});
 		if (lapList.length>10) {lapList.pop()}
