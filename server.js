@@ -7,7 +7,7 @@ var t=0;
 var starttime=Date.now();
 var lapCounter=0, lapStartTime=0, lapLength=500;
 var lapList=new Array();
-var dist=0,startTime=0;
+var dist=0,startTime=0,lapTime=0;
 
 wss.on('connection', handleConnection);
 
@@ -40,9 +40,12 @@ function broadcastTick(msg) {
 }
 
 function handleData(message) {
+	//process.stdout.write(".");
+	console.log(message);
 	data=message.split(',');
 	t=data[0];
-	var msg=t+","+data[1]
+	lapTime+=parseInt(data[1]);
+	var msg=t+","+lapTime;
 	broadcastTick(msg);
 	if (completedALap()) {
 		updateLaps();

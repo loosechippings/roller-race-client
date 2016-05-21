@@ -61,7 +61,7 @@ function updateChaseHand(data) {
 }
 
 function connect() {
-	socket=new WebSocket("ws://localhost:8081");
+	socket=new WebSocket("ws://192.168.0.111:8081");
 	console.log("connected");
 	socket.onclose=function(m) {
 		setTimeout(connect,500)
