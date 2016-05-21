@@ -7,6 +7,7 @@ var t=0;
 var starttime=Date.now();
 var lapCounter=0, lapStartTime=0, lapLength=500;
 var lapList=new Array();
+var dist=0,startTime=0;
 
 wss.on('connection', handleConnection);
 
@@ -39,7 +40,6 @@ function broadcastTick(msg) {
 }
 
 function handleData(message) {
-	console.log(message);
 	data=message.split(',');
 	t=data[0];
 	var msg=t+","+data[1]
@@ -60,14 +60,25 @@ function broadcast(data) {
 	}
 }
 
-var SerialPort=serialport.SerialPort;
-var portName="/dev/ttyUSB0"
+function tick() {
+	handleData((dist+=((Math.random()*3)+1))+","+(Date.now()-startTime));
+	setTimeout(tick,100);
+}
 
-var arduino=new SerialPort(portName, {
-	baudRate: 9600,
-	parser: serialport.parsers.readline("\n")
-});
+if (process.argv.length>2 && process.argv[2]=="-t") {
+	console.log("test mode");
+	startTime=Date.now();
+	tick();
+}
+else {
+	var SerialPort=serialport.SerialPort;
+	var portName="/dev/ttyUSB0"
 
-arduino.on("open", function() {console.log("port open")});
-arduino.on("data", handleData);
+	var arduino=new SerialPort(portName, {
+		baudRate: 9600,
+		parser: serialport.parsers.readline("\n")
+	});
 
+	arduino.on("open", function() {console.log("port open")});
+	arduino.on("data", handleData);
+}
