@@ -5,7 +5,10 @@ var div=360/onelap;
 var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
 var topLapSpeed=0,chaseHandDist=0,lapStartTime=Date.now();
-var dialCenterX=width/2, dialCenterY=height/2, dialRadius=190, tickLength=10;
+var dialCenterX=width/2, dialCenterY=height/2, dialRadius=300, tickLength=10;
+var timerX=dialCenterX-90, timerY=dialCenterY;
+var lapListX=dialCenterX-dialRadius-100, lapListY=dialCenterY-dialRadius;
+var lapAnimation=false,lapAnimationDuration=2000;
 
 connect();
 
@@ -16,6 +19,7 @@ function tickX(angle, radius) {
 function tickY(angle, radius) {
 	return Math.cos(angle)*radius+dialCenterY;
 }
+
 
 dial=d3.select("body").append("svg").attr("width",width).attr("height",height).
 	append("circle").
@@ -46,7 +50,8 @@ hand=d3.select("svg").append("line").
 	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+50).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
-d3.select("svg").append("text").attr("x",dialCenterX-90).attr("y",dialCenterY).classed("timer","true");
+var timer=d3.select("svg").append("text").attr("x",timerX).attr("y",timerY).classed("timer","true");
+
 
 function updateHand(data) {
 	d3.select(".hand").data([data]).attr("transform",function(d) {
@@ -61,7 +66,7 @@ function updateChaseHand(data) {
 }
 
 function connect() {
-	socket=new WebSocket("ws://192.168.0.111:8081");
+	socket=new WebSocket("ws://localhost:8081");
 	console.log("connected");
 	socket.onclose=function(m) {
 		setTimeout(connect,500)
@@ -96,22 +101,37 @@ function formatTime(millis) {
 function updateTick(data) {
 	dist=parseInt(data[0]);
 	millis=formatTime(data[1]);
-	d3.select(".timer").text(millis);
+	// stop updating timer when the lap animation is going on
+	if (!lapAnimation) {
+		timer.text(millis);
+	}
 	updateHand([dist]);
 	chaseHandDist=topLapSpeed*(Date.now()-lapStartTime);
 	updateChaseHand(chaseHandDist);
 }
 
+function resetLapAnimation() {
+	lapAnimation=false;
+}
+
 function updateLaps(data) {
+	lapAnimation=true;
+	// can we do this with an event listener on the transition??
+	setTimeout(resetLapAnimation,lapAnimationDuration);
+
+	timer.text("");
+
 	var lapData=d3.select("svg").
 						selectAll(".lap").
 						data(data,function(d) {return d[1]});
 
-	var lapUpdate=d3.transition(lapData).
-							attr("transform",function(d,i) {
-								var s="translate (0,"+(i*20)+")";
-								return s;
-							});
+	lapData.
+		transition().
+		duration(lapAnimationDuration).
+		attr("transform",function(d,i) {
+			var s="translate (0,"+(i*20)+")";
+			return s;
+		});
 
 	var newEnter=d3.select("svg").selectAll(".lap").
 		data(data,function(d) {return d[1]}).
@@ -119,26 +139,24 @@ function updateLaps(data) {
 	
 	var newText=newEnter.
 		append("text").
-		attr("x",dialCenterX-300).
-		attr("y",dialCenterY-200).
-		attr("transform",function(d,i) {
-			return "translate (0,"+(i*20)+")";
-		}).
+		attr("x",timerX).
+		attr("y",timerY).
 		classed("lap","true").
 		text(function(d) {
 			return formatTime(d[0]);
-		});
+		}).
+		style("font-weight","900");
 
-	newText.style("font-size","30pt").transition().ease("circle").duration(1000).style("font-size","12pt");
+	newText.style("font-size","40pt").transition().ease("circle").duration(lapAnimationDuration)
+		.style("font-size","12pt")
+		.attr("x",lapListX)
+		.attr("y",lapListY)
+		.attr("transform",function(d,i) {
+			return "translate (0,"+(i*20)+")";
+		})
+		.style("font-weight","400");
 
-	lapData.exit().remove();
-}
-
-function pairUp(data) {
-	var n=new Array();
-	for (i=0;i<data.length;i+=2) {
-		n.push([data[i],data[i+1]]);
-	}
+	lapData.exit().transition().duration(lapAnimationDuration).attr("opacity","0").remove();
 }
 
 function showMessage(message) {
