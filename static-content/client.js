@@ -4,10 +4,11 @@ var onelap=500.0;
 var div=360/onelap;
 var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
-var topLapSpeed=0,chaseHandDist=0,lapStartTime=Date.now();
+var topLapSpeed=0,chaseHandDist=0;
 var dialCenterX=width/2, dialCenterY=height/2, dialRadius=300, tickLength=10;
 var timerX=dialCenterX-90, timerY=dialCenterY;
 var lapListX=dialCenterX-dialRadius-100, lapListY=dialCenterY-dialRadius;
+var handLength=dialRadius/3;
 var lapAnimation=false,lapAnimationDuration=2000;
 
 connect();
@@ -43,11 +44,11 @@ d3.select("svg").selectAll(".ticks").data([0,Math.PI/2,Math.PI,Math.PI+Math.PI/2
 	}).classed("dial","true");
 
 chaseHand=d3.select("svg").append("line").
-	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+50).
+	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("chasehand",true);
 hand=d3.select("svg").append("line").
-	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+50).
+	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
 var timer=d3.select("svg").append("text").attr("x",timerX).attr("y",timerY).classed("timer","true");
@@ -71,7 +72,7 @@ function connect() {
 	socket.onclose=function(m) {
 		setTimeout(connect,500)
 	};
-	socket.onmessage=showMessage;
+	socket.onmessage=handleMessage;
 }
 
 function formatThreeDigits(num) {
@@ -106,7 +107,7 @@ function updateTick(data) {
 		timer.text(millis);
 	}
 	updateHand([dist]);
-	chaseHandDist=topLapSpeed*(Date.now()-lapStartTime);
+	chaseHandDist=topLapSpeed*data[1];
 	updateChaseHand(chaseHandDist);
 }
 
@@ -114,16 +115,50 @@ function resetLapAnimation() {
 	lapAnimation=false;
 }
 
-function updateLaps(data) {
+function setupLapList(data) {
+	var lapSelection=d3.select("svg")
+		.selectAll(".lap")
+		.data(data,function(d) {
+			console.log("join on "+d[1]);
+			return d[1]}
+		);
+
+	lapSelection
+		.enter()
+		.append("text")
+		.attr("x",lapListX)
+		.attr("y",lapListY)
+		.attr("transform",function(d,i) {
+			return "translate (0,"+(i*20)+")";
+		})
+		.text(function (d) {return formatTime(d[0])})
+		.style("font-size","16pt")
+		.classed("lap","true");
+	
+	lapSelection
+		.attr("transform",function(d,i) {
+			return "translate (0,"+(i*20)+")";
+		});
+
+	lapSelection
+		.exit()
+		.remove();
+		
+}
+
+function animateNewLapData(data) {
 	lapAnimation=true;
 	// can we do this with an event listener on the transition??
-	setTimeout(resetLapAnimation,lapAnimationDuration);
+	setTimeout(resetLapAnimation,1000);
 
 	timer.text("");
 
 	var lapData=d3.select("svg").
 						selectAll(".lap").
-						data(data,function(d) {return d[1]});
+						data(data,function(d) {
+							console.log("join on "+d[1]);
+							return d[1]}
+						);
 
 	lapData.
 		transition().
@@ -133,11 +168,8 @@ function updateLaps(data) {
 			return s;
 		});
 
-	var newEnter=d3.select("svg").selectAll(".lap").
-		data(data,function(d) {return d[1]}).
-		enter();
-	
-	var newText=newEnter.
+	var newText=lapData.
+		enter().
 		append("text").
 		attr("x",timerX).
 		attr("y",timerY).
@@ -148,7 +180,7 @@ function updateLaps(data) {
 		style("font-weight","900");
 
 	newText.style("font-size","40pt").transition().ease("circle").duration(lapAnimationDuration)
-		.style("font-size","12pt")
+		.style("font-size","16pt")
 		.attr("x",lapListX)
 		.attr("y",lapListY)
 		.attr("transform",function(d,i) {
@@ -159,18 +191,24 @@ function updateLaps(data) {
 	lapData.exit().transition().duration(lapAnimationDuration).attr("opacity","0").remove();
 }
 
-function showMessage(message) {
+function handleMessage(message) {
 	var data=message.data.split(',');
 	var recordType=data.shift();
 	if (recordType=="t") {
 		updateTick(data);
-	} else if (recordType=="l") {
+	} 
+	else if (recordType=="l") {
 		lapList.push([data[0],data[1]]);
-		lapStartTime=Date.now(); // use local time for this because its for the chase hand
 		chaseHandDist=0;
 		lapList.sort(function(a,b) {return a[0]-b[0]});
 		if (lapList.length>10) {lapList.pop()}
 		topLapSpeed=onelap/lapList[0][0];
-		updateLaps(lapList);
+		animateNewLapData(lapList);
+	}
+	else if (recordType="a") {
+		lapList=JSON.parse(data);
+		console.log(lapList);
+		setupLapList(lapList);
+		topLapSpeed=onelap/lapList[0][0];
 	}
 }
