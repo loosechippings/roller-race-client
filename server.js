@@ -4,8 +4,7 @@ var WebSocketServer=require("ws").Server;
 var wss=new WebSocketServer({port: 8081});
 var connections=new Array;
 var t=0;
-var starttime=Date.now();
-var lapCounter=0, lapStartTime=0, lapLength=500;
+var lapCounter=0, lapStartTime=Date.now(), lapLength=500;
 var lapList=new Array();
 var dist=0,startTime=0,lapTime=0;
 
@@ -14,6 +13,7 @@ wss.on('connection', handleConnection);
 function handleConnection(client) {
 	console.log("new client");
 	connections.push(client);
+	broadcastAllLaps(JSON.stringify(lapList));
 }
 
 function completedALap() {
@@ -26,9 +26,14 @@ function updateLaps() {
 	var lap=[now-lapStartTime,now];
 	lapStartTime=now;
 	lapList.push(lap);
+	lapTime=0;
 	lapList.sort(function(a,b) {return a[0]-b[0]})
 	if (lapList.length>10) {lapList.pop()}
 	broadcastLaps(lap);
+}
+
+function broadcastAllLaps(data) {
+	broadcast("a,"+data.toString());
 }
 
 function broadcastLaps(data) {
@@ -40,8 +45,6 @@ function broadcastTick(msg) {
 }
 
 function handleData(message) {
-	//process.stdout.write(".");
-	console.log(message);
 	data=message.split(',');
 	t=data[0];
 	lapTime+=parseInt(data[1]);
@@ -64,7 +67,7 @@ function broadcast(data) {
 }
 
 function tick() {
-	handleData((dist+=((Math.random()*3)+1))+","+(Date.now()-startTime));
+	handleData((dist+=((Math.random()*3)+1))+","+100);
 	setTimeout(tick,100);
 }
 
