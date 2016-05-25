@@ -4,6 +4,11 @@
 	stroke-width: 5pt;
 }
 
+.ticks {
+	stroke: grey;
+	stroke-width: 7pt;
+}
+
 .hand {
 	stroke: red;
 	stroke-width: 3pt;

@@ -1,3 +1,10 @@
+// todo
+// measure size of the text and arrange correctly
+// make page reactive
+// persist lap data (s3?)
+// add player name
+// tidy code
+
 var socket;
 var val=0;
 var onelap=500.0;
@@ -41,7 +48,7 @@ d3.select("svg").selectAll(".ticks").data([0,Math.PI/2,Math.PI,Math.PI+Math.PI/2
 		return tickY(d,dialRadius);
 	}).attr("y2",function(d) {
 		return tickY(d,dialRadius+10);
-	}).classed("dial","true");
+	}).classed("ticks","true");
 
 chaseHand=d3.select("svg").append("line").
 	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
@@ -119,7 +126,6 @@ function setupLapList(data) {
 	var lapSelection=d3.select("svg")
 		.selectAll(".lap")
 		.data(data,function(d) {
-			console.log("join on "+d[1]);
 			return d[1]}
 		);
 
@@ -156,7 +162,6 @@ function animateNewLapData(data) {
 	var lapData=d3.select("svg").
 						selectAll(".lap").
 						data(data,function(d) {
-							console.log("join on "+d[1]);
 							return d[1]}
 						);
 
@@ -207,7 +212,6 @@ function handleMessage(message) {
 	}
 	else if (recordType="a") {
 		lapList=JSON.parse(data);
-		console.log(lapList);
 		setupLapList(lapList);
 		topLapSpeed=onelap/lapList[0][0];
 	}
