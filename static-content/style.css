@@ -1,7 +1,8 @@
 .dial {
 	fill: none;
 	stroke: grey;
-	stroke-width: 5pt;
+	stroke-width: 8pt;
+	fill: white;
 }
 
 .ticks {
@@ -11,12 +12,12 @@
 
 .hand {
 	stroke: red;
-	stroke-width: 3pt;
+	stroke-width: 4pt;
 }
 
 .chasehand {
 	stroke: green;
-	stroke-width: 3pt;
+	stroke-width: 4pt;
 }
 
 .timer {

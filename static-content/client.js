@@ -13,7 +13,7 @@ var width=window.innerWidth, height=window.innerHeight;
 var lapList=new Array();
 var topLapSpeed=0,chaseHandDist=0;
 var dialCenterX=width/2, dialCenterY=height/2, dialRadius=300, tickLength=10;
-var timerX=dialCenterX-90, timerY=dialCenterY;
+var timerTextSize;
 var lapListX=dialCenterX-dialRadius-100, lapListY=dialCenterY-dialRadius;
 var handLength=dialRadius/3;
 var lapAnimation=false,lapAnimationDuration=2000;
@@ -28,8 +28,7 @@ function tickY(angle, radius) {
 	return Math.cos(angle)*radius+dialCenterY;
 }
 
-
-dial=d3.select("body").append("svg").attr("width",width).attr("height",height).
+dial=d3.select("svg").attr("width",width).attr("height",height).
 	append("circle").
 	attr("r",dialRadius).
 	attr("cx",dialCenterX).
@@ -58,7 +57,13 @@ hand=d3.select("svg").append("line").
 	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
-var timer=d3.select("svg").append("text").attr("x",timerX).attr("y",timerY).classed("timer","true");
+
+var timer=d3.select("svg")
+	.append("text")
+	.classed("timer","true")
+	.text("88:88:888");
+timerTextSize=timer[0][0].getBBox();
+timer.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY);
 
 
 function updateHand(data) {
@@ -176,16 +181,17 @@ function animateNewLapData(data) {
 	var newText=lapData.
 		enter().
 		append("text").
-		attr("x",timerX).
-		attr("y",timerY).
+		attr("x",dialCenterX-timerTextSize.width/2).
+		attr("y",dialCenterY).
 		classed("lap","true").
 		text(function(d) {
 			return formatTime(d[0]);
 		}).
 		style("font-weight","900");
 
-	newText.style("font-size","40pt").transition().ease("circle").duration(lapAnimationDuration)
+	newText.style("font-size","40pt").style("weight","900").transition().ease("circle").duration(lapAnimationDuration)
 		.style("font-size","16pt")
+		.style("weight","300")
 		.attr("x",lapListX)
 		.attr("y",lapListY)
 		.attr("transform",function(d,i) {
