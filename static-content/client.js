@@ -17,6 +17,7 @@ var timerTextSize;
 var lapListX=dialCenterX-dialRadius-100, lapListY=dialCenterY-dialRadius;
 var handLength=dialRadius/3;
 var lapAnimation=false,lapAnimationDuration=2000;
+var speedHist=[];
 
 connect();
 
@@ -49,11 +50,12 @@ d3.select("svg").selectAll(".ticks").data([0,Math.PI/2,Math.PI,Math.PI+Math.PI/2
 		return tickY(d,dialRadius+10);
 	}).classed("ticks","true");
 
-chaseHand=d3.select("svg").append("line").
+var chaseHand=d3.select("svg").append("line").
 	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("chasehand",true);
-hand=d3.select("svg").append("line").
+
+var hand=d3.select("svg").append("line").
 	attr("x1",dialCenterX).attr("y1",dialCenterY-dialRadius+handLength).
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
@@ -63,8 +65,12 @@ var timer=d3.select("svg")
 	.classed("timer","true")
 	.text("88:88:888");
 timerTextSize=timer[0][0].getBBox();
-timer.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY);
+timer.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY+timerTextSize.height/4);
 
+var speedText=d3.select("svg")
+	.append("text")
+	.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY+timerTextSize.height);
+speedText.classed("speedo","true");
 
 function updateHand(data) {
 	d3.select(".hand").data([data]).attr("transform",function(d) {
@@ -140,15 +146,15 @@ function setupLapList(data) {
 		.attr("x",lapListX)
 		.attr("y",lapListY)
 		.attr("transform",function(d,i) {
-			return "translate (0,"+(i*20)+")";
+			return "translate (0,"+(i*20)+") scale(0.5,0.5)";
 		})
 		.text(function (d) {return formatTime(d[0])})
-		.style("font-size","16pt")
+		.style("font-size","40pt")
 		.classed("lap","true");
 	
 	lapSelection
 		.attr("transform",function(d,i) {
-			return "translate (0,"+(i*20)+")";
+			return "translate (0,"+(i*20)+") scale(0.5,0.5)";
 		});
 
 	lapSelection
@@ -165,16 +171,16 @@ function animateNewLapData(data) {
 	timer.text("");
 
 	var lapData=d3.select("svg").
-						selectAll(".lap").
-						data(data,function(d) {
-							return d[1]}
-						);
+		selectAll(".lap").
+		data(data,function(d) {
+			return d[1]}
+		);
 
 	lapData.
 		transition().
 		duration(lapAnimationDuration).
 		attr("transform",function(d,i) {
-			var s="translate (0,"+(i*20)+")";
+			var s="translate (0,"+(i*20)+") scale(0.5,0.5)";
 			return s;
 		});
 
@@ -189,17 +195,35 @@ function animateNewLapData(data) {
 		}).
 		style("font-weight","900");
 
-	newText.style("font-size","40pt").style("weight","900").transition().ease("circle").duration(lapAnimationDuration)
-		.style("font-size","16pt")
+	newText.style("font-size","40pt")
+		.style("weight","900")
+		.transition()
+		.ease("circle")
+		.duration(lapAnimationDuration)
+		//.style("font-size","16pt")
 		.style("weight","300")
 		.attr("x",lapListX)
 		.attr("y",lapListY)
 		.attr("transform",function(d,i) {
-			return "translate (0,"+(i*20)+")";
+			return "translate (0,"+(i*20)+") scale (0.5,0.5)";
 		})
 		.style("font-weight","400");
 
 	lapData.exit().transition().duration(lapAnimationDuration).attr("opacity","0").remove();
+}
+
+function formatSpeed(speed) {
+	return parseInt(speed*10)/10;
+}
+
+function updateSpeed(data) {
+	var newData=[parseInt(data[0]),parseInt(data[1])];
+	speedHist.push(newData);
+	if (speedHist.length>20) {speedHist.shift()}
+	var dist=newData[0]-speedHist[0][0];
+	var time=newData[1]-speedHist[0][1];
+	var speed=dist/time*60*60; //m to Km, millis to secs, secs to mins, mins to hours
+	speedText.text(formatSpeed(speed));
 }
 
 function handleMessage(message) {
@@ -207,14 +231,17 @@ function handleMessage(message) {
 	var recordType=data.shift();
 	if (recordType=="t") {
 		updateTick(data);
+		updateSpeed(data);
 	} 
 	else if (recordType=="l") {
-		lapList.push([data[0],data[1]]);
 		chaseHandDist=0;
-		lapList.sort(function(a,b) {return a[0]-b[0]});
-		if (lapList.length>10) {lapList.pop()}
-		topLapSpeed=onelap/lapList[0][0];
-		animateNewLapData(lapList);
+		if (lapList.length<10 || data[0]<lapList[lapList.length-1][0]) {
+			lapList.push([data[0],data[1]]);
+			lapList.sort(function(a,b) {return a[0]-b[0]});
+			if (lapList.length>10) {lapList.pop()}
+			topLapSpeed=onelap/lapList[0][0];
+			animateNewLapData(lapList);
+		}
 	}
 	else if (recordType="a") {
 		lapList=JSON.parse(data);

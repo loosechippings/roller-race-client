@@ -21,6 +21,8 @@ function completedALap() {
 }
 
 function updateLaps() {
+	console.log("LAP");
+	
 	var now=Date.now();
 	lapCounter=parseInt(t/lapLength);
 	var lap=[now-lapStartTime,now];
@@ -67,8 +69,8 @@ function broadcast(data) {
 }
 
 function tick() {
-	handleData((dist+=((Math.random()*3)+1))+","+100);
-	setTimeout(tick,100);
+	handleData((dist+=((Math.random()*0.5)+0.5))+","+50);
+	setTimeout(tick,50);
 }
 
 if (process.argv.length>2 && process.argv[2]=="-t") {

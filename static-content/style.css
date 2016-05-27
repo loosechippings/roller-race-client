@@ -20,9 +20,15 @@
 	stroke-width: 4pt;
 }
 
+.speedo {
+	font-family: sans-serif;
+	font-size: 80pt;
+	font-weight: bolder;
+}
+
 .timer {
 	font-family: sans-serif;
-	font-size: 40pt;
+	font-size: 80pt;
 	font-weight: bolder;
 }
 
@@ -31,5 +37,4 @@
 }
 
 body {
-	background: aliceblue;
 }
