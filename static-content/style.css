@@ -30,7 +30,11 @@
 
 .timer {
 	font-family: sans-serif;
-	font-size: 90pt;
+	font-weight: bolder;
+}
+
+.millis {
+	font-family: sans-serif;
 	font-weight: bolder;
 }
 

@@ -59,16 +59,29 @@ var hand=d3.select("svg").append("line").
 	attr("x2",dialCenterX).attr("y2",dialCenterY-dialRadius).
 	classed("hand",true);
 
-var timer=d3.select("svg")
+var timerGroup=d3.select("svg")
+	.append("g");
+
+var timerSecs=timerGroup
 	.append("text")
 	.classed("timer","true")
-	.text("88:88:888");
-timerTextSize=timer[0][0].getBBox();
-timer.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY+timerTextSize.height/4);
+	.text("88:88")
+	.style("font-size","80pt");
+
+var timerMillis=timerGroup
+	.append("text")
+	.classed("millis","true")
+	.text(":888")
+	.style("font-size","40pt");
+
+timerSecsSize=timerSecs[0][0].getBBox();
+timerMillisSize=timerMillis[0][0].getBBox();
+timerGroup.attr("transform","translate ("+(dialCenterX-((timerSecsSize.width+timerMillisSize.width)/2))+","+dialCenterY+timerSecsSize.height/4+")");
+timerMillis.attr("x",timerSecsSize.width);
 
 var speedText=d3.select("svg")
 	.append("text")
-	.attr("x",dialCenterX-timerTextSize.width/2).attr("y",dialCenterY+timerTextSize.height);
+	.attr("x",dialCenterX-timerSecsSize.width/2).attr("y",dialCenterY+timerSecsSize.height);
 speedText.classed("speedo","true");
 
 function updateHand(data) {
@@ -110,18 +123,26 @@ function formatTwoDigits(num) {
 	}
 }
 
-function formatTime(millis) {
+function formatMinsAndSecs(millis) {
 	secs=parseInt(millis/1000);
 	mins=parseInt(secs/60);
-	return formatTwoDigits(mins)+":"+formatTwoDigits((secs%60))+":"+formatThreeDigits(millis%1000);
+	return formatTwoDigits(mins)+":"+formatTwoDigits((secs%60));
+}
+
+function formatMillis(millis) {
+	return ":"+formatThreeDigits(millis%1000);
+}
+
+function formatTime(millis) {
+	timerSecs.text(formatMinsAndSecs(millis));
+	timerMillis.text(formatMillis(millis));
 }
 
 function updateTick(data) {
 	dist=parseInt(data[0]);
-	millis=formatTime(data[1]);
 	// stop updating timer when the lap animation is going on
 	if (!lapAnimation) {
-		timer.text(millis);
+		formatTime(data[1]);
 	}
 	updateHand([dist]);
 	chaseHandDist=topLapSpeed*data[1];
