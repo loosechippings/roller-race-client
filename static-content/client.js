@@ -17,7 +17,6 @@ var timerTextSize;
 var lapListX=dialCenterX-dialRadius-100, lapListY=dialCenterY-dialRadius;
 var handLength=dialRadius/3;
 var lapAnimation=false,lapAnimationDuration=2000;
-var speedHist=[];
 
 connect();
 
@@ -216,13 +215,7 @@ function formatSpeed(speed) {
 	return parseInt(speed*10)/10;
 }
 
-function updateSpeed(data) {
-	var newData=[parseInt(data[0]),parseInt(data[1])];
-	speedHist.push(newData);
-	if (speedHist.length>20) {speedHist.shift()}
-	var dist=newData[0]-speedHist[0][0];
-	var time=newData[1]-speedHist[0][1];
-	var speed=dist/time*60*60; //m to Km, millis to secs, secs to mins, mins to hours
+function updateSpeed(speed) {
 	speedText.text(formatSpeed(speed));
 }
 
@@ -231,7 +224,7 @@ function handleMessage(message) {
 	var recordType=data.shift();
 	if (recordType=="t") {
 		updateTick(data);
-		updateSpeed(data);
+		updateSpeed(data[2]);
 	} 
 	else if (recordType=="l") {
 		chaseHandDist=0;

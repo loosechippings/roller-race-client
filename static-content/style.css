@@ -3,11 +3,13 @@
 	stroke: grey;
 	stroke-width: 8pt;
 	fill: white;
+	opacity: 0.5;
 }
 
 .ticks {
 	stroke: grey;
 	stroke-width: 7pt;
+	opacity: 0.5;
 }
 
 .hand {
@@ -28,7 +30,7 @@
 
 .timer {
 	font-family: sans-serif;
-	font-size: 80pt;
+	font-size: 90pt;
 	font-weight: bolder;
 }
 

@@ -6,7 +6,8 @@ var connections=new Array;
 var t=0;
 var lapCounter=0, lapStartTime=Date.now(), lapLength=500;
 var lapList=new Array();
-var dist=0,startTime=0,lapTime=0;
+var dist=0,lapTime=0;
+var speedHist=[], speedDist=0, speedTime=0;
 
 wss.on('connection', handleConnection);
 
@@ -46,11 +47,25 @@ function broadcastTick(msg) {
 	broadcast("t,"+msg);
 }
 
+function updateSpeed(data) {
+	var newData=[parseFloat(data[0]),parseInt(data[1])];
+	speedHist.push(newData);
+	speedDist+=newData[0];
+	speedTime+=newData[1];
+	if (speedHist.length>200) {
+		var old=speedHist.shift()
+		speedDist-=old[0];
+		speedTime-=old[1];
+	}
+	return speedDist/speedTime*60*60; //m to Km, millis to secs, secs to mins, mins to hours
+}
+
 function handleData(message) {
-	data=message.split(',');
-	t=data[0];
+	var data=message.split(',');
+	t+=parseFloat(data[0]);
+	var speed=updateSpeed(data);
 	lapTime+=parseInt(data[1]);
-	var msg=t+","+lapTime;
+	var msg=t+","+lapTime+","+speed;
 	broadcastTick(msg);
 	if (completedALap()) {
 		updateLaps();
@@ -69,13 +84,12 @@ function broadcast(data) {
 }
 
 function tick() {
-	handleData((dist+=((Math.random()*0.5)+0.5))+","+50);
+	handleData(((Math.random()*0.5)+0.5)+",50");
 	setTimeout(tick,50);
 }
 
 if (process.argv.length>2 && process.argv[2]=="-t") {
 	console.log("test mode");
-	startTime=Date.now();
 	tick();
 }
 else {
