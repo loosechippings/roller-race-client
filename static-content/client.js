@@ -17,12 +17,12 @@ var dialCenterX=width/2;
 var dialCenterY=height/2;
 var dialRadius=300;
 var tickLength=10;
-var timerTextSize;
 var lapListX=dialCenterX-dialRadius-100;
 var lapListY=dialCenterY-dialRadius;
 var handLength=dialRadius/3;
 var lapAnimation=false;
 var lapAnimationDuration=2000;
+var timerSecsSize, timerMillisSize;
 
 connect();
 
@@ -97,10 +97,10 @@ function createTimerGroup() {
     .text(':888')
     .style('font-size', '40pt');
 
-  var timerSecsSize=timerSecs[0][0].getBBox();
-  var timerMillisSize=timerMillis[0][0].getBBox();
+  timerSecsSize=timerSecs[0][0].getBBox();
+  timerMillisSize=timerMillis[0][0].getBBox();
   timerGroup.attr('transform',
-      'translate ('+(dialCenterX-((timerSecsSize.width+timerMillisSize.width)/2))+','+dialCenterY+timerSecsSize.height/4+')');
+     'translate ('+(dialCenterX-((timerSecsSize.width+timerMillisSize.width)/2))+','+(dialCenterY+timerSecsSize.height/4)+')');
   timerMillis.attr('x', timerSecsSize.width);
 
   return timerGroup;
@@ -239,11 +239,13 @@ function animateNewLapData(data) {
   var newText=lapData
     .enter()
     .append('text')
-    .attr('x', dialCenterX-timerTextSize.width/2)
+    .attr('x', dialCenterX-((timerSecsSize.width+timerMillisSize.width)/2))
     .attr('y', dialCenterY)
     .classed('lap', 'true')
     .text(function(d) {
-      return formatTime(d[0]);
+      var foo=''+formatMinsAndSecs(d[0])+formatMillis(d[0]);
+      console.log('lap - '+foo);
+      return foo;
     })
     .style('font-weight', '900');
 
